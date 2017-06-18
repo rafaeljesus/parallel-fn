@@ -5,12 +5,16 @@ WARN_COLOR=\033[33;01m
 
 IGNORED_PACKAGES := /vendor/
 
-.PHONY: all test
+.PHONY: all deps test
 
-all: test
+all: deps test
+
+deps:
+	@echo "$(OK_COLOR)==> Installing golint$(NO_COLOR)"
+	@go get -u github.com/golang/lint/golint
 
 test:
-	@/bin/sh -c "./build/test.sh $(allpackages)"
+	@/bin/sh -c "./test.sh $(allpackages)"
 
 _allpackages = $(shell ( go list ./... 2>&1 1>&3 | \
     grep -v -e "^$$" $(addprefix -e ,$(IGNORED_PACKAGES)) 1>&2 ) 3>&1 | \

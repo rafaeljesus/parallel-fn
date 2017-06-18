@@ -23,11 +23,11 @@ func TestRun(t *testing.T) {
 	}
 
 	if count != 2 {
-		t.Errorf("parallel.Run() failed, got '%s', expected '%s'", count, 2)
+		t.Errorf("parallel.Run() failed, got '%v', expected '%v'", count, 2)
 	}
 
 	if err == nil {
-		t.Errorf("parallel.Run() failed, got '%s', expected '%s'", err, nil)
+		t.Errorf("parallel.Run() failed, got '%v', expected '%v'", err, nil)
 	}
 }
 
@@ -49,10 +49,10 @@ func TestRunLimit(t *testing.T) {
 	}
 
 	if count != 2 {
-		t.Errorf("parallel.Run() failed, got '%s', expected '%s'", count, 2)
+		t.Errorf("parallel.Run() failed, got '%v', expected '%v'", count, 2)
 	}
 
 	if err == nil {
-		t.Errorf("parallel.Run() failed, got '%s', expected '%s'", err, nil)
+		t.Errorf("parallel.Run() failed, got '%v', expected '%v'", err, nil)
 	}
 }
