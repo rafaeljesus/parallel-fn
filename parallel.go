@@ -22,7 +22,7 @@ func RunLimit(concurrency int, functions ...func() error) chan error {
 		concurrency = 1
 	}
 
-	if concurrency < total {
+	if concurrency > total {
 		concurrency = total
 	}
 
