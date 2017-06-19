@@ -30,10 +30,10 @@ func RunLimit(concurrency int, functions ...func() error) chan error {
 	errs := make(chan error, total)
 
 	for _, fn := range functions {
-		go func(fn func() error) {
+		go func(fn func() error, sem <-chan struct{}, errs chan error) {
 			defer func() { <-sem }()
 			errs <- fn()
-		}(fn)
+		}(fn, sem, errs)
 	}
 
 	for i := 0; i < cap(sem); i++ {
