@@ -13,7 +13,7 @@ func Run(functions ...func() error) chan error {
 	return errs
 }
 
-// Run calls the passed functions in a goroutine, limiting the number of goroutines running at the same time,
+// RunLimit calls the passed functions in a goroutine, limiting the number of goroutines running at the same time,
 // returns a chan of errors.
 func RunLimit(concurrency int, functions ...func() error) chan error {
 	total := len(functions)
