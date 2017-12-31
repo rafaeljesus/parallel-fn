@@ -20,13 +20,18 @@ import (
 )
 
 func main() {
+	timeout := time.After(2 * time.Second)
   fn1 := func() error { return nil }
   fn2 := func() error { return errors.New("BOOM!") }
 
-  errs := parallel.Run(fn1, fn2)
-  for err := range errs {
-    // catch errors
-  }
+	for {
+		select {
+		case err := <-Run(fn1, fn2):
+      // catch errors
+		case <-timeout:
+      // handle timeout
+		}
+	}
 }
 ```
 
@@ -36,19 +41,25 @@ package main
 
 import (
   "errors"
+
   "github.com/rafaeljesus/parallel-fn"
 )
 
 func main() {
+	timeout := time.After(2 * time.Second)
   fn1 := func() error { return nil }
   fn2 := func() error { return errors.New("BOOM!") }
   fn3 := func() error { nil }
   fn4 := func() error { nil }
 
-  errs := parallel.RunLimit(2, fn1, fn2, fn3, fn4)
-  for err := range errs {
-    // catch errors
-  }
+	for {
+		select {
+		case err := <-RunLimit(2, fn1, fn2, fn3, fn4):
+      // catch errors
+		case <-timeout:
+      // handle timeout
+		}
+	}
 }
 ```
 

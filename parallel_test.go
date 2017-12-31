@@ -3,56 +3,127 @@ package parallel
 import (
 	"errors"
 	"testing"
+	"time"
 )
 
-func TestRun(t *testing.T) {
-	var err error
-	var count int
-	fn1 := func() error { return nil }
-	fn2 := func() error { return errors.New("BOOM!") }
+var (
+	fn1     = func() error { return nil }
+	fn2     = func() error { return errors.New("BOOM!") }
+	timeout = time.After(2 * time.Second)
+)
 
-	errs := Run(fn1, fn2)
-	for e := range errs {
-		count++
-		if e != nil {
-			err = e
-		}
-		if count == 2 {
-			break
-		}
+func TestParallel(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		scenario string
+		function func(*testing.T)
+	}{
+		{
+			scenario: "test run",
+			function: testRun,
+		},
+		{
+			scenario: "test run limit",
+			function: testRunLimit,
+		},
+		{
+			scenario: "test run limit with negative concurrency value",
+			function: testRunLimitWithNegativeConcurrencyValue,
+		},
+		{
+			scenario: "test run limit with concurrency value greater than passed functions",
+			function: testRunLimitWithConcurrencyGreaterThanPassedFunctions,
+		},
 	}
 
-	if count != 2 {
-		t.Errorf("parallel.Run() failed, got '%v', expected '%v'", count, 2)
-	}
-
-	if err == nil {
-		t.Errorf("parallel.Run() failed, got '%v', expected '%v'", err, nil)
+	for _, test := range tests {
+		t.Run(test.scenario, func(t *testing.T) {
+			test.function(t)
+		})
 	}
 }
 
-func TestRunLimit(t *testing.T) {
-	var err error
+func testRun(t *testing.T) {
 	var count int
-	fn1 := func() error { return nil }
-	fn2 := func() error { return errors.New("BOOM!") }
-
-	errs := RunLimit(2, fn1, fn2)
-	for e := range errs {
-		count++
-		if e != nil {
-			err = e
-		}
-		if count == 2 {
-			break
+outer:
+	for {
+		select {
+		case <-Run(fn1, fn2):
+			count++
+			if count == 2 {
+				break outer
+			}
+		case <-timeout:
+			t.Errorf("parallel.Run() failed, got timeout error")
+			break outer
 		}
 	}
 
 	if count != 2 {
 		t.Errorf("parallel.Run() failed, got '%v', expected '%v'", count, 2)
 	}
+}
 
-	if err == nil {
-		t.Errorf("parallel.Run() failed, got '%v', expected '%v'", err, nil)
+func testRunLimit(t *testing.T) {
+	var count int
+outer:
+	for {
+		select {
+		case <-RunLimit(2, fn1, fn2):
+			count++
+			if count == 2 {
+				break outer
+			}
+		case <-timeout:
+			t.Errorf("parallel.Run() failed, got timeout error")
+			break outer
+		}
+	}
+
+	if count != 2 {
+		t.Errorf("parallel.Run() failed, got '%v', expected '%v'", count, 2)
+	}
+}
+
+func testRunLimitWithNegativeConcurrencyValue(t *testing.T) {
+	var count int
+outer:
+	for {
+		select {
+		case <-RunLimit(-1, fn1, fn2):
+			count++
+			if count == 2 {
+				break outer
+			}
+		case <-timeout:
+			t.Errorf("parallel.Run() failed, got timeout error")
+			break outer
+		}
+	}
+
+	if count != 2 {
+		t.Errorf("parallel.Run() failed, got '%v', expected '%v'", count, 2)
+	}
+}
+
+func testRunLimitWithConcurrencyGreaterThanPassedFunctions(t *testing.T) {
+	var count int
+outer:
+	for {
+		select {
+		case <-RunLimit(3, fn1, fn2):
+			count++
+			if count == 2 {
+				break outer
+			}
+		case <-timeout:
+			t.Errorf("parallel.Run() failed, got timeout error")
+			break outer
+		}
+	}
+
+	if count != 2 {
+		t.Errorf("parallel.Run() failed, got '%v', expected '%v'", count, 2)
 	}
 }
