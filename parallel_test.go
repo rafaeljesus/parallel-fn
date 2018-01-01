@@ -46,10 +46,11 @@ func TestParallel(t *testing.T) {
 
 func testRun(t *testing.T) {
 	var count int
+	err := Run(fn1, fn2)
 outer:
 	for {
 		select {
-		case <-Run(fn1, fn2):
+		case <-err:
 			count++
 			if count == 2 {
 				break outer
@@ -67,10 +68,11 @@ outer:
 
 func testRunLimit(t *testing.T) {
 	var count int
+	err := RunLimit(2, fn1, fn2)
 outer:
 	for {
 		select {
-		case <-RunLimit(2, fn1, fn2):
+		case <-err:
 			count++
 			if count == 2 {
 				break outer
@@ -88,10 +90,11 @@ outer:
 
 func testRunLimitWithNegativeConcurrencyValue(t *testing.T) {
 	var count int
+	err := RunLimit(-1, fn1, fn2)
 outer:
 	for {
 		select {
-		case <-RunLimit(-1, fn1, fn2):
+		case <-err:
 			count++
 			if count == 2 {
 				break outer
@@ -109,10 +112,11 @@ outer:
 
 func testRunLimitWithConcurrencyGreaterThanPassedFunctions(t *testing.T) {
 	var count int
+	err := RunLimit(3, fn1, fn2)
 outer:
 	for {
 		select {
-		case <-RunLimit(3, fn1, fn2):
+		case <-err:
 			count++
 			if count == 2 {
 				break outer
