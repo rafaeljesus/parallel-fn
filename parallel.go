@@ -43,13 +43,23 @@ func RunLimit(concurrency int, functions ...Func) chan error {
 		concurrency = total
 	}
 
+	var wg sync.WaitGroup
+	wg.Add(total)
+
 	errs := make(chan error, total)
+	go func(errs chan error) {
+		wg.Wait()
+		close(errs)
+	}(errs)
+
 	sem := make(chan struct{}, concurrency)
 	defer func(sem chan<- struct{}) { close(sem) }(sem)
 
 	for _, fn := range functions {
 		go func(fn Func, sem <-chan struct{}, errs chan error) {
+			defer wg.Done()
 			defer func(sem <-chan struct{}) { <-sem }(sem)
+
 			errs <- fn()
 		}(fn, sem, errs)
 	}
