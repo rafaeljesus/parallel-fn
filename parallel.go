@@ -1,13 +1,30 @@
 package parallel
 
+import (
+	"sync"
+)
+
+// Func is the function to run concurrently.
+type Func func() error
+
 // Run calls the passed functions in a goroutine, returns a chan of errors.
-func Run(functions ...func() error) chan error {
-	errs := make(chan error, len(functions))
+func Run(functions ...Func) chan error {
+	total := len(functions)
+	errs := make(chan error, total)
+
+	var wg sync.WaitGroup
+	wg.Add(total)
+
+	go func(errs chan error) {
+		wg.Wait()
+		close(errs)
+	}(errs)
 
 	for _, fn := range functions {
-		go func(fn func() error) {
+		go func(fn Func, errs chan error) {
+			defer wg.Done()
 			errs <- fn()
-		}(fn)
+		}(fn, errs)
 	}
 
 	return errs
@@ -15,7 +32,7 @@ func Run(functions ...func() error) chan error {
 
 // RunLimit calls the passed functions in a goroutine, limiting the number of goroutines running at the same time,
 // returns a chan of errors.
-func RunLimit(concurrency int, functions ...func() error) chan error {
+func RunLimit(concurrency int, functions ...Func) chan error {
 	total := len(functions)
 
 	if concurrency <= 0 {
@@ -31,7 +48,7 @@ func RunLimit(concurrency int, functions ...func() error) chan error {
 	defer func(sem chan<- struct{}) { close(sem) }(sem)
 
 	for _, fn := range functions {
-		go func(fn func() error, sem <-chan struct{}, errs chan error) {
+		go func(fn Func, sem <-chan struct{}, errs chan error) {
 			defer func(sem <-chan struct{}) { <-sem }(sem)
 			errs <- fn()
 		}(fn, sem, errs)
