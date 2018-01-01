@@ -4,8 +4,6 @@ import (
 	"sync"
 )
 
-var mu sync.Mutex
-
 // Func is the function to run concurrently.
 type Func func() error
 
